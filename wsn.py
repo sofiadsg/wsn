@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
+import matplotlib
+import tkinter
 import numpy as np
+
+matplotlib.use('TkAgg')
 
 class composant:
     def __init__(self,p_veille,t_reveil,p_reveil,t_actif,p_actif):
@@ -219,11 +223,95 @@ def WSNPlot(puissances,temps):
     plt.ylabel("Puissance (W)")
     plt.show()
 
-composants = [composant(0.15e-6,1.5,2.7e-6,1,2.7e-6),composant(2.7e-6,2,50e-5,3,70.8e-5)]
-capteurs = [composant(4.86e-6,.5,1.08e-3,1.2,2e-3),composant(25e-6,.5,1.875e-3,1.2,1.575e-3)]
+cap_num = 0
+capteurs_Label = []
+capteurs_p1 = []
+capteurs_p2 = []
+capteurs_p3 = []
+capteurs_p4 = []
+capteurs_p5 = []
+
+
+def ajouterCapteur():
+    global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5
+    capteurs_Label.append(0)
+    capteurs_p1.append(0)
+    capteurs_p2.append(0)
+    capteurs_p3.append(0)
+    capteurs_p4.append(0)
+    capteurs_p5.append(0)
+    capteurs_Label[cap_num] = tkinter.Label(window,text="Capteur " + str(cap_num + 1))
+    capteurs_Label[cap_num].grid(column=0,row=cap_num+3)
+    capteurs_p1[cap_num] = tkinter.Entry(window,width=5)
+    capteurs_p1[cap_num].grid(column=1,row=cap_num+3)
+    capteurs_p2[cap_num] = tkinter.Entry(window,width=5)
+    capteurs_p2[cap_num].grid(column=2,row=cap_num+3)
+    capteurs_p3[cap_num] = tkinter.Entry(window,width=5)
+    capteurs_p3[cap_num].grid(column=3,row=cap_num+3)
+    capteurs_p4[cap_num] = tkinter.Entry(window,width=5)
+    capteurs_p4[cap_num].grid(column=4,row=cap_num+3)
+    capteurs_p5[cap_num] = tkinter.Entry(window,width=5)
+    capteurs_p5[cap_num].grid(column=5,row=cap_num+3)
+    print(p1_up.get())
+
+    cap_num += 1
+
+def createComponents():
+    global composants,capteurs,cap_num
+    capteurs = []
+    composants = [composant(float(p1_up.get()),float(p2_up.get()),float(p3_up.get()),float(p4_up.get()),float(p5_up.get())),composant(float(p1_er.get()),float(p2_er.get()),float(p3_er.get()),float(p4_er.get()),float(p5_er.get()))]
+    for i in range(cap_num):
+        capteurs.append(composant(capteurs_p1[i],capteurs_p2[i],capteurs_p3[i],capteurs_p4[i],capteurs_p5[i]))
+
+    print(capteurs)
+
+
+window = tkinter.Tk()
+window.title("Parametres de simulation")
+window.geometry('800x300')
+
+lb1 = tkinter.Label(window, text="Puissance en veille (W):")
+lb1.grid(column=1, row=0)
+lb2 = tkinter.Label(window, text="Temps de reveil (s):")
+lb2.grid(column=2, row=0)
+lb1 = tkinter.Label(window, text="Puissance de reveil (W):")
+lb1.grid(column=3, row=0)
+lb2 = tkinter.Label(window, text="Temps actif (s):")
+lb2.grid(column=4, row=0)
+lb1 = tkinter.Label(window, text="Puissance actif (W):")
+lb1.grid(column=5, row=0)
+comp = tkinter.Label(window, text="Microprocesseur:")
+comp.grid(column=0, row=1)
+p1_up = tkinter.Entry(window,width=5)
+p1_up.grid(column=1,row=1)
+p2_up = tkinter.Entry(window,width=5)
+p2_up.grid(column=2,row=1)
+p3_up = tkinter.Entry(window,width=5)
+p3_up.grid(column=3,row=1)
+p4_up = tkinter.Entry(window,width=5)
+p4_up.grid(column=4,row=1)
+p5_up = tkinter.Entry(window,width=5)
+p5_up.grid(column=5,row=1)
+p1_er = tkinter.Entry(window,width=5)
+p1_er.grid(column=1,row=2)
+p2_er = tkinter.Entry(window,width=5)
+p2_er.grid(column=2,row=2)
+p3_er = tkinter.Entry(window,width=5)
+p3_er.grid(column=3,row=2)
+p4_er = tkinter.Entry(window,width=5)
+p4_er.grid(column=4,row=2)
+p5_er = tkinter.Entry(window,width=5)
+p5_er.grid(column=5,row=2)
+comp2 = tkinter.Label(window, text="Emetteur/recepteur:")
+comp2.grid(column=0, row=2)
+btn = tkinter.Button(window, text="Ajouter capteur",command=ajouterCapteur)
+btn.grid(column=3, row=20)
+btn = tkinter.Button(window, text="Lancer simulation",command=createComponents)
+btn.grid(column=3, row=21)
+window.mainloop()
+  
 btry = Baterie(13,1)
 t_simulation = 30
 
 puissances,temps,pm = Simulate(composants,capteurs,btry,t_simulation)
-WSNPlot(puissances,temps)
-
+#WSNPlot(puissances,temps)
