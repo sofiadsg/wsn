@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import tkinter
+from tkinter import ttk
 import numpy as np
 
 matplotlib.use('TkAgg')
@@ -12,6 +13,9 @@ class composant:
         self.p_reveil = p_reveil
         self.t_actif = t_actif
         self.p_actif = p_actif
+    
+    def __str__(self):
+        return "p_veille: " + str(self.p_veille) + " t_reveil: " + str(self.t_reveil) + " p_reveil: " + str(self.p_reveil) + " t_actif: " + str(self.t_actif) + " p_actif: " + str(self.p_actif)
 
 class Baterie:
     def __init__(self,charge_initial,puissance_recharge):
@@ -230,78 +234,196 @@ capteurs_p2 = []
 capteurs_p3 = []
 capteurs_p4 = []
 capteurs_p5 = []
+frames1 = []
+frames2 = []
+frames3 = []
+frames4 = []
+frames5 = []
+units1 = []
+units2 = []
+units3 = []
+units4 = []
+units5 = []
+time_val = ("s","ms","us")
+pow_val = ("W","mW","uW")
+multipliers = {"s":1,"ms":1e-3,"us":1e-6,"W":1,"mW":1e-3,"uW":1e-6}
 
 
 def ajouterCapteur():
-    global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5
+    global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5, frames1, frames2, frames3, frames4, frames5, units1, units2, units3, units4, units5
     capteurs_Label.append(0)
     capteurs_p1.append(0)
     capteurs_p2.append(0)
     capteurs_p3.append(0)
     capteurs_p4.append(0)
     capteurs_p5.append(0)
-    capteurs_Label[cap_num] = tkinter.Label(window,text="Capteur " + str(cap_num + 1))
+    frames1.append(0)
+    frames2.append(0)
+    frames3.append(0)
+    frames4.append(0)
+    frames5.append(0)
+    units1.append(0)
+    units2.append(0)
+    units3.append(0)
+    units4.append(0)
+    units5.append(0)
+
+    capteurs_Label[cap_num] = tkinter.Label(window,text = "Capteur "+str(cap_num+1))
     capteurs_Label[cap_num].grid(column=0,row=cap_num+3)
-    capteurs_p1[cap_num] = tkinter.Entry(window,width=5)
-    capteurs_p1[cap_num].grid(column=1,row=cap_num+3)
-    capteurs_p2[cap_num] = tkinter.Entry(window,width=5)
-    capteurs_p2[cap_num].grid(column=2,row=cap_num+3)
-    capteurs_p3[cap_num] = tkinter.Entry(window,width=5)
-    capteurs_p3[cap_num].grid(column=3,row=cap_num+3)
-    capteurs_p4[cap_num] = tkinter.Entry(window,width=5)
-    capteurs_p4[cap_num].grid(column=4,row=cap_num+3)
-    capteurs_p5[cap_num] = tkinter.Entry(window,width=5)
-    capteurs_p5[cap_num].grid(column=5,row=cap_num+3)
-    print(p1_up.get())
+
+    frames1[cap_num] = tkinter.Frame(window)
+    frames1[cap_num].grid(column=1,row=cap_num+3)
+    capteurs_p1[cap_num] = tkinter.Entry(frames1[cap_num],width=5)
+    capteurs_p1[cap_num].grid(column=0,row=0)
+    units1[cap_num] = ttk.Combobox(frames1[cap_num],values=pow_val,width=3)
+    units1[cap_num].grid(column=1,row=0)
+
+    frames2[cap_num] = tkinter.Frame(window)
+    frames2[cap_num].grid(column=2,row=cap_num+3)
+    capteurs_p2[cap_num] = tkinter.Entry(frames2[cap_num],width=5)
+    capteurs_p2[cap_num].grid(column=0,row=0)
+    units2[cap_num] = ttk.Combobox(frames2[cap_num],values=time_val,width=3)
+    units2[cap_num].grid(column=1,row=0)
+
+    frames3[cap_num] = tkinter.Frame(window)
+    frames3[cap_num].grid(column=3,row=cap_num+3)
+    capteurs_p3[cap_num] = tkinter.Entry(frames3[cap_num],width=5)
+    capteurs_p3[cap_num].grid(column=0,row=0)
+    units3[cap_num] = ttk.Combobox(frames3[cap_num],values=pow_val,width=3)
+    units3[cap_num].grid(column=1,row=0)
+
+    frames4[cap_num] = tkinter.Frame(window)
+    frames4[cap_num].grid(column=4,row=cap_num+3)
+    capteurs_p4[cap_num] = tkinter.Entry(frames4[cap_num],width=5)
+    capteurs_p4[cap_num].grid(column=0,row=0)
+    units4[cap_num] = ttk.Combobox(frames4[cap_num],values=time_val,width=3)
+    units4[cap_num].grid(column=1,row=0)
+
+    frames5[cap_num] = tkinter.Frame(window)
+    frames5[cap_num].grid(column=5,row=cap_num+3)
+    capteurs_p5[cap_num] = tkinter.Entry(frames5[cap_num],width=5)
+    capteurs_p5[cap_num].grid(column=0,row=0)
+    units5[cap_num] = ttk.Combobox(frames5[cap_num],values=pow_val,width=3)
+    units5[cap_num].grid(column=1,row=0)
 
     cap_num += 1
 
 def createComponents():
     global composants,capteurs,cap_num
     capteurs = []
-    composants = [composant(float(p1_up.get()),float(p2_up.get()),float(p3_up.get()),float(p4_up.get()),float(p5_up.get())),composant(float(p1_er.get()),float(p2_er.get()),float(p3_er.get()),float(p4_er.get()),float(p5_er.get()))]
+    composants = [composant(float(p1_up.get())*multipliers[p1_unit.get()],float(p2_up.get())*multipliers[p2_unit.get()],float(p3_up.get())*multipliers[p3_unit.get()],float(p4_up.get())*multipliers[p4_unit.get()],float(p5_up.get())*multipliers[p5_unit.get()]),composant(float(p1_re.get())*multipliers[p1_unitre.get()] ,float(p2_re.get())*multipliers[p2_unitre.get()] ,float(p3_re.get())*multipliers[p3_unitre.get()] ,float(p4_re.get())*multipliers[p4_unitre.get()],float(p5_re.get())*multipliers[p5_unitre.get()])]
     for i in range(cap_num):
-        capteurs.append(composant(capteurs_p1[i],capteurs_p2[i],capteurs_p3[i],capteurs_p4[i],capteurs_p5[i]))
-
-    print(capteurs)
-
+        capteurs.append(composant(float(capteurs_p1[i].get())*multipliers[units1[i].get()],float(capteurs_p2[i].get())*multipliers[units2[i].get()],float(capteurs_p3[i].get())*multipliers[units3[i].get()],float(capteurs_p4[i].get())*multipliers[units4[i].get()],float(capteurs_p5[i].get())*multipliers[units5[i].get()]))
 
 window = tkinter.Tk()
 window.title("Parametres de simulation")
 window.geometry('800x300')
 
-lb1 = tkinter.Label(window, text="Puissance en veille (W):")
+btr = tkinter.Label(window,text="Baterie:")
+btr.grid(column=0, row=19)
+btrChIn = tkinter.Label(window,text="Charge initielle (C): ")
+btrChIn.grid(column=1, row=19)
+btrChIntb = tkinter.Entry(window,width=5)
+btrChIntb.grid(column=2,row=19)
+btrP = tkinter.Label(window,text="Puissance de recharge (W): ")
+btrP.grid(column=3, row=19)
+btrPtb = tkinter.Entry(window,width=5)
+btrPtb.grid(column=4,row=19)
+
+tlabel = tkinter.Label(window,text="Temps de simulation:")
+tlabel.grid(column=2,row=22)
+frametemps = tkinter.Frame(window)
+frametemps.grid(column=3,row=22)
+timess = tkinter.Entry(frametemps,width=5)
+timess.grid(column=0,row=0)
+timess_unit = ttk.Combobox(frametemps,values=time_val,width=3)
+timess_unit.grid(column=1,row=0)
+
+lb1 = tkinter.Label(window, text="Puissance en veille:")
 lb1.grid(column=1, row=0)
-lb2 = tkinter.Label(window, text="Temps de reveil (s):")
+lb2 = tkinter.Label(window, text="Temps de reveil:")
 lb2.grid(column=2, row=0)
-lb1 = tkinter.Label(window, text="Puissance de reveil (W):")
+lb1 = tkinter.Label(window, text="Puissance de reveil:")
 lb1.grid(column=3, row=0)
-lb2 = tkinter.Label(window, text="Temps actif (s):")
+lb2 = tkinter.Label(window, text="Temps actif:")
 lb2.grid(column=4, row=0)
-lb1 = tkinter.Label(window, text="Puissance actif (W):")
+lb1 = tkinter.Label(window, text="Puissance actif:")
 lb1.grid(column=5, row=0)
 comp = tkinter.Label(window, text="Microprocesseur:")
 comp.grid(column=0, row=1)
-p1_up = tkinter.Entry(window,width=5)
-p1_up.grid(column=1,row=1)
-p2_up = tkinter.Entry(window,width=5)
-p2_up.grid(column=2,row=1)
-p3_up = tkinter.Entry(window,width=5)
-p3_up.grid(column=3,row=1)
-p4_up = tkinter.Entry(window,width=5)
-p4_up.grid(column=4,row=1)
-p5_up = tkinter.Entry(window,width=5)
-p5_up.grid(column=5,row=1)
-p1_er = tkinter.Entry(window,width=5)
-p1_er.grid(column=1,row=2)
-p2_er = tkinter.Entry(window,width=5)
-p2_er.grid(column=2,row=2)
-p3_er = tkinter.Entry(window,width=5)
-p3_er.grid(column=3,row=2)
-p4_er = tkinter.Entry(window,width=5)
-p4_er.grid(column=4,row=2)
-p5_er = tkinter.Entry(window,width=5)
-p5_er.grid(column=5,row=2)
+
+frame1 = tkinter.Frame(window)
+frame1.grid(column=1,row=1)
+p1_up = tkinter.Entry(frame1,width=5)
+p1_up.grid(column=0,row=0)
+p1_unit = ttk.Combobox(frame1,values=pow_val,width=3)
+p1_unit.grid(column=1,row=0)
+
+frame2 = tkinter.Frame(window)
+frame2.grid(column=2,row=1)
+p2_up = tkinter.Entry(frame2,width=5)
+p2_up.grid(column=0,row=0)
+p2_unit = ttk.Combobox(frame2,values=time_val,width=3)
+p2_unit.grid(column=1,row=0)
+
+frame3 = tkinter.Frame(window)
+frame3.grid(column=3,row=1)
+p3_up = tkinter.Entry(frame3,width=5)
+p3_up.grid(column=0,row=0)
+p3_unit = ttk.Combobox(frame3,values=pow_val,width=3)
+p3_unit.grid(column=1,row=0)
+
+frame4 = tkinter.Frame(window)
+frame4.grid(column=4,row=1)
+p4_up = tkinter.Entry(frame4,width=5)
+p4_up.grid(column=0,row=0)
+p4_unit = ttk.Combobox(frame4,values=time_val,width=3)
+p4_unit.grid(column=1,row=0)
+
+frame5 = tkinter.Frame(window)
+frame5.grid(column=5,row=1)
+p5_up = tkinter.Entry(frame5,width=5)
+p5_up.grid(column=0,row=0)
+p5_unit = ttk.Combobox(frame5,values=pow_val,width=3)
+p5_unit.grid(column=1,row=0)
+
+fram1 = tkinter.Frame(window)
+fram1.grid(column=1,row=2)
+p1_re = tkinter.Entry(fram1,width=5)
+p1_re.grid(column=0,row=0)
+p1_unitre = ttk.Combobox(fram1,values=pow_val,width=3)
+p1_unitre.grid(column=1,row=0)
+
+fram2 = tkinter.Frame(window)
+fram2.grid(column=2,row=2)
+p2_re = tkinter.Entry(fram2,width=5)
+p2_re.grid(column=0,row=0)
+p2_unitre = ttk.Combobox(fram2,values=time_val,width=3)
+p2_unitre.grid(column=1,row=0)
+
+fram3 = tkinter.Frame(window)
+fram3.grid(column=3,row=2)
+p3_re = tkinter.Entry(fram3,width=5)
+p3_re.grid(column=0,row=0)
+p3_unitre = ttk.Combobox(fram3,values=pow_val,width=3)
+p3_unitre.grid(column=1,row=0)
+
+fram4 = tkinter.Frame(window)
+fram4.grid(column=4,row=2)
+p4_re = tkinter.Entry(fram4,width=5)
+p4_re.grid(column=0,row=0)
+p4_unitre = ttk.Combobox(fram4,values=time_val,width=3)
+p4_unitre.grid(column=1,row=0)
+
+fram5 = tkinter.Frame(window)
+fram5.grid(column=5,row=2)
+p5_re = tkinter.Entry(fram5,width=5)
+p5_re.grid(column=0,row=0)
+p5_unitre = ttk.Combobox(fram5,values=pow_val,width=3)
+p5_unitre.grid(column=1,row=0)
+
+
+
 comp2 = tkinter.Label(window, text="Emetteur/recepteur:")
 comp2.grid(column=0, row=2)
 btn = tkinter.Button(window, text="Ajouter capteur",command=ajouterCapteur)
@@ -309,9 +431,12 @@ btn.grid(column=3, row=20)
 btn = tkinter.Button(window, text="Lancer simulation",command=createComponents)
 btn.grid(column=3, row=21)
 window.mainloop()
-  
-btry = Baterie(13,1)
-t_simulation = 30
 
-puissances,temps,pm = Simulate(composants,capteurs,btry,t_simulation)
+for i in composants:
+    print(i)
+
+for j in capteurs:
+    print(j)
+
+#puissances,temps,pm = Simulate(composants,capteurs,btry,t_simulation)
 #WSNPlot(puissances,temps)
