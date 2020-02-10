@@ -6,6 +6,7 @@ import numpy as np
 
 matplotlib.use('TkAgg')
 
+#class définissant les composants(microprocesseur,capteurs...) avec les differents temps et puissances
 class composant:
     def __init__(self,p_veille,t_reveil,p_reveil,t_actif,p_actif):
         self.p_veille = p_veille
@@ -17,11 +18,13 @@ class composant:
     def __str__(self):
         return "p_veille: " + str(self.p_veille) + " t_reveil: " + str(self.t_reveil) + " p_reveil: " + str(self.p_reveil) + " t_actif: " + str(self.t_actif) + " p_actif: " + str(self.p_actif)
 
+#class définissant le composant batterie
 class Baterie:
     def __init__(self,charge_initial,puissance_recharge):
         self.charge_initial = charge_initial
         self.puissance_recharge = puissance_recharge 
 
+#Calcul d'énergie necessaire aux differentes étapes du cycle
 def EnergieReveilMicrocontroleur(composants,capteurs):
     energie = composants[0].p_reveil*composants[0].t_reveil
     energie += composants[1].p_veille*composants[0].t_reveil
@@ -94,6 +97,7 @@ def EnergieMiseEnVeil(composants,capteurs):
 
     return energie
 
+#Calcul d'energie total necessaire à un cycle
 def calculerEnergie(composants,capteurs):
     energie = EnergieReveilMicrocontroleur(composants,capteurs)
     energie += EnergieReveilCapteurs(composants,capteurs)
@@ -104,6 +108,7 @@ def calculerEnergie(composants,capteurs):
     energie += EnergieMiseEnVeil(composants,capteurs)
     return energie 
 
+#Calcul de puissance consommée aux differentes étapes du cycle
 def PuissanceReveilMicrocontroleur(composants, Capteurs):
   P  = [composants[1].p_veille] +  [i.p_veille for i in Capteurs]
   P.append(composants[0].p_reveil)
@@ -137,63 +142,66 @@ def PuissanceMiseVeil(Composant, Capteurs):
   T = [Composant[0].t_reveil] + [Composant[1].t_reveil]
   return sum(P), max(T)
 
+#Fonction effectuant la simulation
 def Simulate(Composants,Capteurs,btry,t):
     puissances = []
     temps = [0]
     energie = calculerEnergie(Composants,Capteurs)
     b = btry.charge_initial
+    b_level = [btry.charge_initial]
     while(True):
         if b >= energie:
             P1, T1 = PuissanceReveilMicrocontroleur(composants, capteurs)
             puissances.append(P1)
             temps.append(temps[-1]+T1)
-            pm = energie/T1
+            b_level.append(b_level[-1] - P1*T1)
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P2, T2 = PuissanceReveilCapteurs(composants, capteurs)
             puissances.append(P2)
             temps.append(T2 + temps[-1])
-            pm = energie/T2
+            b_level.append(b_level[-1] - P2*T2)  
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P3, T3 = PuissanceMesures(composants, capteurs)
             puissances.append(P3)
             temps.append(T3 + temps[-1])
-            pm = energie/T3
+            b_level.append(b_level[-1] - P3*T3)
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P4, T4 = PuissanceTraitementVeilCapeurs(composants, capteurs)
             puissances.append(P4)
             temps.append(T4 + temps[-1])
-            pm = energie/T4
+            b_level.append(b_level[-1] - P4*T4) 
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P5, T5 = PuissanceReveilEmmRecep(composants, capteurs)
             puissances.append(P5)
             temps.append(T5 + temps[-1])
-            pm = energie/T5
+            b_level.append(b_level[-1] - P5*T5) 
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P6, T6 = PuissanceEnvoiDonnes(composants, capteurs)
             puissances.append(P6)
             temps.append(T6 + temps[-1])
-            pm = energie/T6
+            b_level.append(b_level[-1] - P6*T6) 
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             P7, T7 = PuissanceMiseVeil(composants, capteurs)
             puissances.append(P7)
             temps.append(T7 + temps[-1])
-            pm = energie/T7
+            b_level.append(b_level[-1] - P7*T7)
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             b = b - energie
+            
 
         else:     
             puissances.append(composants[1].p_veille+composants[1].p_veille)
@@ -201,17 +209,25 @@ def Simulate(Composants,Capteurs,btry,t):
                 puissances[-1]+=c.p_veille
             temps_recharge = (energie - b)/(btry.puissance_recharge - puissances[-1])
             temps.append(temps[-1]+temps_recharge)
+            b_level.append(energie)
             if(temps[-1] > t):
                 temps[-1] = t
                 break
             else:
                 b = energie
                 
-    return puissances,temps,pm
+    return puissances,temps,b_level
 
-def WSNPlot(puissances,temps):
-    pm = [sum(puissances)/temps[-1],sum(puissances)/temps[-1]]
-    t_pm = [temps[0],temps[-1]] 
+#Fonction effectuant le tracé de graphique
+def WSNPlot(puissances,temps,b_level):
+    b_level = np.repeat(b_level,2)
+    b_level = b_level[1:-1]
+    pm=0
+    for i in range(len(puissances)):
+        pm += puissances[i]*(temps[i+1] - temps[i])
+
+    pm = pm/temps[-1]
+
     puissances = np.repeat(puissances,2)
     temps = np.repeat(temps,2)
 
@@ -219,14 +235,30 @@ def WSNPlot(puissances,temps):
         temps[i] += -((-1)^i)*1e-6
 
     temps = temps[1:-1]
-    plt.plot(temps,puissances)
-    plt.plot(t_pm,pm)
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.title("Simulation of WSN")
-    plt.xlabel("Temps (s)")
-    plt.ylabel("Puissance (W)")
+    tpm = [temps[0],temps[-1]]
+    pm = [pm,pm]
+
+    fig,ax1 = plt.subplots()
+
+    color = (1,0,0)
+    ax1.set_xlabel('temps (s)')
+    ax1.set_ylabel('Puissance (W)', color=color)
+    ax1.plot(temps,puissances,color=color,label = 'Puissance consommée')
+    ax1.plot(tpm,pm,color=(0,0,0),label = 'Puissance moyenne')
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()
+
+    color = (0,0,1)
+    ax2.set_ylabel('Charge de la batterie (C)', color=color)
+    ax2.plot(temps, b_level, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()
+    fig.legend(loc='upper left')
     plt.show()
 
+#Initialisation des variables globales dont on aura besoin pour l'interface graphique
 cap_num = 0
 capteurs_Label = []
 capteurs_p1 = []
@@ -248,7 +280,7 @@ time_val = ("s","ms","us")
 pow_val = ("W","mW","uW")
 multipliers = {"s":1,"ms":1e-3,"us":1e-6,"W":1,"mW":1e-3,"uW":1e-6}
 
-
+# fonction permettant d'ajouter des capteurs à partir de l'interface graphique
 def ajouterCapteur():
     global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5, frames1, frames2, frames3, frames4, frames5, units1, units2, units3, units4, units5
     capteurs_Label.append(0)
@@ -308,20 +340,32 @@ def ajouterCapteur():
 
     cap_num += 1
 
+#Fonction permettant de prendre les valeurs par defaut ou les valeurs que l'utilisateur a indique sur l'interface graphique
 def createComponents():
-    global composants,capteurs,cap_num
-    capteurs = []
-    composants = [composant(float(p1_up.get())*multipliers[p1_unit.get()],float(p2_up.get())*multipliers[p2_unit.get()],float(p3_up.get())*multipliers[p3_unit.get()],float(p4_up.get())*multipliers[p4_unit.get()],float(p5_up.get())*multipliers[p5_unit.get()]),composant(float(p1_re.get())*multipliers[p1_unitre.get()] ,float(p2_re.get())*multipliers[p2_unitre.get()] ,float(p3_re.get())*multipliers[p3_unitre.get()] ,float(p4_re.get())*multipliers[p4_unitre.get()],float(p5_re.get())*multipliers[p5_unitre.get()])]
-    for i in range(cap_num):
-        capteurs.append(composant(float(capteurs_p1[i].get())*multipliers[units1[i].get()],float(capteurs_p2[i].get())*multipliers[units2[i].get()],float(capteurs_p3[i].get())*multipliers[units3[i].get()],float(capteurs_p4[i].get())*multipliers[units4[i].get()],float(capteurs_p5[i].get())*multipliers[units5[i].get()]))
+    global composants,capteurs,cap_num,btry,t_simulation, window
+    try:
+        btry = Baterie(float(btrChIntb.get()),float(btrPtb.get()))
+        t_simulation = float(timess.get())*multipliers[timess_unit.get()]
+        capteurs = []
+        composants = [composant(float(p1_up.get())*multipliers[p1_unit.get()],float(p2_up.get())*multipliers[p2_unit.get()],float(p3_up.get())*multipliers[p3_unit.get()],float(p4_up.get())*multipliers[p4_unit.get()],float(p5_up.get())*multipliers[p5_unit.get()]),composant(float(p1_re.get())*multipliers[p1_unitre.get()] ,float(p2_re.get())*multipliers[p2_unitre.get()] ,float(p3_re.get())*multipliers[p3_unitre.get()] ,float(p4_re.get())*multipliers[p4_unitre.get()],float(p5_re.get())*multipliers[p5_unitre.get()])]
+        for i in range(cap_num):
+            capteurs.append(composant(float(capteurs_p1[i].get())*multipliers[units1[i].get()],float(capteurs_p2[i].get())*multipliers[units2[i].get()],float(capteurs_p3[i].get())*multipliers[units3[i].get()],float(capteurs_p4[i].get())*multipliers[units4[i].get()],float(capteurs_p5[i].get())*multipliers[units5[i].get()]))
+    except ValueError:
+        btry = Baterie(10,.1)
+        t_simulation = 15
+        composants = [composant(.15e-6,1.5,2.7e-6,100e-6,2.7e-6),composant(2.7e-6,100e-3,1e-3,350e-6,70.8e-3)]
+        capteurs = [composant(4.86e-6,40e-9,1.08e-3,30e-9,1.08e-3),composant(25e-6,2e-3,1.875e-3,2e-3,1.875e-3)]
 
+    window.destroy()
+
+#Construction de l'interface graphique
 window = tkinter.Tk()
 window.title("Parametres de simulation")
 window.geometry('800x300')
 
-btr = tkinter.Label(window,text="Baterie:")
+btr = tkinter.Label(window,text="Batterie:")
 btr.grid(column=0, row=19)
-btrChIn = tkinter.Label(window,text="Charge initielle (C): ")
+btrChIn = tkinter.Label(window,text="Charge initiale (C): ")
 btrChIn.grid(column=1, row=19)
 btrChIntb = tkinter.Entry(window,width=5)
 btrChIntb.grid(column=2,row=19)
@@ -432,11 +476,6 @@ btn = tkinter.Button(window, text="Lancer simulation",command=createComponents)
 btn.grid(column=3, row=21)
 window.mainloop()
 
-for i in composants:
-    print(i)
-
-for j in capteurs:
-    print(j)
-
-#puissances,temps,pm = Simulate(composants,capteurs,btry,t_simulation)
-#WSNPlot(puissances,temps)
+#Lancement de la simulation et tracement de la courbe
+puissances,temps,bat_l = Simulate(composants,capteurs,btry,t_simulation)
+WSNPlot(puissances,temps,bat_l)
