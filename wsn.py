@@ -266,6 +266,7 @@ capteurs_p2 = []
 capteurs_p3 = []
 capteurs_p4 = []
 capteurs_p5 = []
+frames0 = []
 frames1 = []
 frames2 = []
 frames3 = []
@@ -276,19 +277,36 @@ units2 = []
 units3 = []
 units4 = []
 units5 = []
+composants=[]
+capteurs = []
+btry = 0
+t_simulation=0
 time_val = ("s","ms","us")
 pow_val = ("W","mW","uW")
 multipliers = {"s":1,"ms":1e-3,"us":1e-6,"W":1,"mW":1e-3,"uW":1e-6}
+cap2ignore = []
+
+def retireCapteur():
+    number = int(retCapNumber.get())
+    cap2ignore.append(number-1)
+    frames0[number-1].destroy()
+    frames1[number-1].destroy()
+    frames2[number-1].destroy()
+    frames3[number-1].destroy()
+    frames4[number-1].destroy()
+    frames5[number-1].destroy()
+    print(cap2ignore)
 
 # fonction permettant d'ajouter des capteurs à partir de l'interface graphique
 def ajouterCapteur():
-    global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5, frames1, frames2, frames3, frames4, frames5, units1, units2, units3, units4, units5
+    global cap_num, capteurs_Label, capteurs_p1, capteurs_p2, capteurs_p3, capteurs_p4, capteurs_p5, frames0, frames1, frames2, frames3, frames4, frames5, units1, units2, units3, units4, units5
     capteurs_Label.append(0)
     capteurs_p1.append(0)
     capteurs_p2.append(0)
     capteurs_p3.append(0)
     capteurs_p4.append(0)
     capteurs_p5.append(0)
+    frames0.append(0)
     frames1.append(0)
     frames2.append(0)
     frames3.append(0)
@@ -300,8 +318,10 @@ def ajouterCapteur():
     units4.append(0)
     units5.append(0)
 
-    capteurs_Label[cap_num] = tkinter.Label(window,text = "Capteur "+str(cap_num+1))
-    capteurs_Label[cap_num].grid(column=0,row=cap_num+3)
+    frames0[cap_num] = tkinter.Frame(window)
+    frames0[cap_num].grid(column=0,row=cap_num+3)
+    capteurs_Label[cap_num] = tkinter.Label(frames0[cap_num],text = "Capteur "+str(cap_num+1))
+    capteurs_Label[cap_num].grid(column=1,row=0)
 
     frames1[cap_num] = tkinter.Frame(window)
     frames1[cap_num].grid(column=1,row=cap_num+3)
@@ -342,18 +362,27 @@ def ajouterCapteur():
 
 #Fonction permettant de prendre les valeurs par defaut ou les valeurs que l'utilisateur a indique sur l'interface graphique
 def createComponents():
-    global composants,capteurs,cap_num,btry,t_simulation, window
+    global composants,capteurs,cap_num,btry,t_simulation, window, cap2ignore
     try:
         btry = Baterie(float(btrChIntb.get()),float(btrPtb.get()))
-        t_simulation = float(timess.get())*multipliers[timess_unit.get()]
-        capteurs = []
-        composants = [composant(float(p1_up.get())*multipliers[p1_unit.get()],float(p2_up.get())*multipliers[p2_unit.get()],float(p3_up.get())*multipliers[p3_unit.get()],float(p4_up.get())*multipliers[p4_unit.get()],float(p5_up.get())*multipliers[p5_unit.get()]),composant(float(p1_re.get())*multipliers[p1_unitre.get()] ,float(p2_re.get())*multipliers[p2_unitre.get()] ,float(p3_re.get())*multipliers[p3_unitre.get()] ,float(p4_re.get())*multipliers[p4_unitre.get()],float(p5_re.get())*multipliers[p5_unitre.get()])]
-        for i in range(cap_num):
-            capteurs.append(composant(float(capteurs_p1[i].get())*multipliers[units1[i].get()],float(capteurs_p2[i].get())*multipliers[units2[i].get()],float(capteurs_p3[i].get())*multipliers[units3[i].get()],float(capteurs_p4[i].get())*multipliers[units4[i].get()],float(capteurs_p5[i].get())*multipliers[units5[i].get()]))
     except ValueError:
         btry = Baterie(10,.1)
+    
+    try:
+        t_simulation = float(timess.get())*multipliers[timess_unit.get()]
+    except ValueError:
         t_simulation = 15
+
+    try:
+        composants = [composant(float(p1_up.get())*multipliers[p1_unit.get()],float(p2_up.get())*multipliers[p2_unit.get()],float(p3_up.get())*multipliers[p3_unit.get()],float(p4_up.get())*multipliers[p4_unit.get()],float(p5_up.get())*multipliers[p5_unit.get()]),composant(float(p1_re.get())*multipliers[p1_unitre.get()] ,float(p2_re.get())*multipliers[p2_unitre.get()] ,float(p3_re.get())*multipliers[p3_unitre.get()] ,float(p4_re.get())*multipliers[p4_unitre.get()],float(p5_re.get())*multipliers[p5_unitre.get()])]
+    except ValueError:
         composants = [composant(.15e-6,1.5,2.7e-6,100e-6,2.7e-6),composant(2.7e-6,100e-3,1e-3,350e-6,70.8e-3)]
+    
+    try:
+        for i in range(cap_num):
+            if i not in cap2ignore:
+                capteurs.append(composant(float(capteurs_p1[i].get())*multipliers[units1[i].get()],float(capteurs_p2[i].get())*multipliers[units2[i].get()],float(capteurs_p3[i].get())*multipliers[units3[i].get()],float(capteurs_p4[i].get())*multipliers[units4[i].get()],float(capteurs_p5[i].get())*multipliers[units5[i].get()]))
+    except ValueError:
         capteurs = [composant(4.86e-6,40e-9,1.08e-3,30e-9,1.08e-3),composant(25e-6,2e-3,1.875e-3,2e-3,1.875e-3)]
 
     window.destroy()
@@ -362,6 +391,15 @@ def createComponents():
 window = tkinter.Tk()
 window.title("Parametres de simulation")
 window.geometry('800x300')
+
+retCap = tkinter.Label(window,text = "Retirer capteur numero")
+retCap.grid(column = 2,row = 23)
+retCapFrame = tkinter.Frame(window)
+retCapFrame.grid(column=3,row=23)
+retCapNumber = tkinter.Entry(retCapFrame,width=5)
+retCapNumber.grid(column = 0, row = 0)
+retCapButton = tkinter.Button(retCapFrame,text="Retirer",command=retireCapteur)
+retCapButton.grid(column=1,row=0)
 
 btr = tkinter.Label(window,text="Batterie:")
 btr.grid(column=0, row=19)
